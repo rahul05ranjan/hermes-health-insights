@@ -14,7 +14,7 @@ Switches live in `~/.config/health-insights/modules.yaml`, a tiny file the tool 
 glp1: true                 # on
 medication_adherence: false
 ```
-Mapping form, with options: `glp1: {enabled: true, options: {weight_loss_pct_per_week: 1.5}}`. You can also put a `modules:` block in `config.yaml`, or enable modules for one run with `HEALTH_INSIGHTS_MODULES=glp1,medication_adherence`. Precedence: environment, then `modules.yaml`, then `config.yaml`.
+Mapping form, with options: `glp1: {enabled: true, options: {weight_pct_per_week: 1.5}}`. You can also put a `modules:` block in `config.yaml`, or enable modules for one run with `HEALTH_INSIGHTS_MODULES=glp1,medication_adherence`. Precedence: environment, then `modules.yaml`, then `config.yaml`.
 
 Ask your agent: the `health-insights-modules` skill lists modules in plain language, explains cautions before enabling, and only turns one on when you ask.
 

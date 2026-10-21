@@ -11,6 +11,7 @@ glp1_dehydration_pattern, glp1_lean_share, glp1_strength_gap, glp1_glucose_low.
 from __future__ import annotations
 
 import sqlite3
+import sys
 import statistics
 from datetime import date as Date, datetime, timedelta
 from typing import Optional
@@ -65,11 +66,25 @@ _INFO = "Informational only, not medical advice; this tool cannot tell what is c
 
 
 def _opts() -> dict:
+    """The module's options over the defaults, with an unknown key named out loud.
+
+    A key outside DEFAULTS is not an error the run should die on, but it must
+    never be accepted silently either: these options are user-facing
+    configuration, and a typo'd key (the documented-but-unread
+    `weight_loss_pct_per_week`, say) leaves the threshold at its default with
+    nothing telling the user the setting did not take effect. Unknown keys are
+    dropped with a one-line warning on stderr naming them and the known keys.
+    """
     merged = dict(DEFAULTS)
     try:
-        merged.update(modules.options(MODULE_ID))
+        given = modules.options(MODULE_ID)
     except KeyError:
-        pass
+        return merged
+    unknown = sorted(set(given) - set(DEFAULTS))
+    if unknown:
+        print(f"health-insights: glp1: ignoring unknown option(s): {', '.join(unknown)} "
+              f"(known options: {', '.join(sorted(DEFAULTS))})", file=sys.stderr)
+    merged.update({k: v for k, v in given.items() if k in DEFAULTS})
     return merged
 
 

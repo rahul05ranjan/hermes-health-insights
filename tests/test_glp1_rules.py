@@ -1,8 +1,10 @@
 """GLP-1 / incretin monitoring module: opt-in, personal-baseline rules, informational wording, synthetic data only."""
+import os
 import sqlite3
 from datetime import date, datetime, time, timedelta, timezone
 
 import pytest
+from pathlib import Path
 
 from health_insights import modules, settings
 from health_insights.concern_rules import glp1_rules
@@ -286,3 +288,27 @@ def test_cli_report_needs_the_module_on_and_prints_flags(tmp_path, monkeypatch, 
     assert cli.main(["modules", "info", "glp1"]) == 0
     assert "sudden loss of vision" in capsys.readouterr().out.lower()
     settings.reset()
+
+
+def test_a_documented_option_key_is_actually_read(opts, monkeypatch):
+    """The docs say `weight_pct_per_week`; the code must read the same key (#3)."""
+    Path(os.environ["HEALTH_INSIGHTS_MODULES_FILE"]).write_text(
+        "glp1:\n  enabled: true\n  options: {weight_pct_per_week: 5.0}\n")
+    monkeypatch.delenv("HEALTH_INSIGHTS_MODULES")  # the env list would mask the file's mapping
+    settings.reset()
+    assert glp1_rules._opts()["weight_pct_per_week"] == 5.0
+
+
+def test_an_unknown_option_key_is_named_not_swallowed(opts, capsys, monkeypatch):
+    """A typo'd key warns and leaves the default, instead of silently doing nothing (#3)."""
+    Path(os.environ["HEALTH_INSIGHTS_MODULES_FILE"]).write_text(
+        "glp1:\n  enabled: true\n"
+        "  options: {weight_loss_pct_per_week: 5.0, ckd: true}\n")
+    monkeypatch.delenv("HEALTH_INSIGHTS_MODULES")  # the env list would mask the file's mapping
+    settings.reset()
+    out = glp1_rules._opts()
+    err = capsys.readouterr().err
+    assert out["weight_pct_per_week"] == 1.5  # the default stands: the key was never read
+    assert out["ckd"] is True  # known keys still apply
+    assert "weight_loss_pct_per_week" in err
+    assert "weight_pct_per_week" in err  # the warning names the known keys too
