@@ -76,7 +76,8 @@ def _add_db_option(parser, required_help=_DB_HELP):
     parser.add_argument("--db", help=required_help)
 
 
-def _parse_args(argv):
+def build_parser():
+    """Build the CLI parser (kept apart from _parse_args so tests can pin its contract)."""
     parser = argparse.ArgumentParser(
         prog="health-insights",
         description="Health monitoring analysis (stdlib).",
@@ -231,6 +232,11 @@ def _parse_args(argv):
     p_dl.add_argument("--db", help=_DB_HELP)
     p_dl.add_argument("--date", required=True, help="Day (YYYY-MM-DD)")
 
+    return parser
+
+
+def _parse_args(argv):
+    parser = build_parser()
     args = parser.parse_args(argv)
     if args.command in ("daily", "baseline"):
         # `<cmd> <db_path> <type_code>` (original form) or `<cmd> <type_code>` (database resolved).
